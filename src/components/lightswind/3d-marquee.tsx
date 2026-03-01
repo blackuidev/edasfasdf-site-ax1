@@ -1,100 +1,75 @@
-"use client";
+import React from 'react';
+import { cn } from '@/lib/utils';
 
-import { motion } from "framer-motion";
-import React from "react";
-
-export interface MarqueeImage {
-  src: string;
-  alt: string;
-  href?: string;
-  target?: "_blank" | "_self" | "_parent" | "_top";
-}
-
-export interface ThreeDMarqueeProps {
-  images: MarqueeImage[];
+interface MarqueeProps {
   className?: string;
-  cols?: number; // default is 4
-  onImageClick?: (image: MarqueeImage, index: number) => void;
+  reverse?: boolean;
+  pauseOnHover?: boolean;
+  children?: React.ReactNode;
+  vertical?: boolean;
+  [key: string]: any;
 }
 
-export const ThreeDMarquee: React.FC<ThreeDMarqueeProps> = ({
-  images,
-  className = "",
-  cols = 4,
-  onImageClick,
-}) => {
-  // Clone the image list twice
-  const duplicatedImages = [...images, ...images];
-
-  const groupSize = Math.ceil(duplicatedImages.length / cols);
-  const imageGroups = Array.from({ length: cols }, (_, index) =>
-    duplicatedImages.slice(index * groupSize, (index + 1) * groupSize)
-  );
-
-  const handleImageClick = (image: MarqueeImage, globalIndex: number) => {
-    if (onImageClick) {
-      onImageClick(image, globalIndex);
-    } else if (image.href) {
-      window.open(image.href, image.target || "_self");
-    }
-  };
-
-  return (
-    <section
-      className={`mx-auto block h-[600px] max-sm:h-[400px] 
-        overflow-hidden rounded-2xl bg-white dark:bg-black ${className}`}
-    >
+export const Marquee = React.forwardRef<HTMLDivElement, MarqueeProps>(
+  (
+    {
+      className,
+      reverse,
+      pauseOnHover = false,
+      children,
+      vertical = false,
+      ...props
+    },
+    ref
+  ) => {
+    return (
       <div
-        className="flex w-full h-full items-center justify-center"
-        style={{
-          transform: "rotateX(55deg) rotateY(0deg) rotateZ(45deg)",
-        }}
+        ref={ref}
+        {...props}
+        className={cn(
+          'group flex overflow-hidden p-2 [--duration:40s] [--gap:1rem] [gap:var(--gap)]',
+          {
+            'flex-row': !vertical,
+            'flex-col': vertical,
+          },
+          className
+        )}
       >
-        <div className="w-full overflow-hidden scale-90 sm:scale-100">
+        {React.Children.map(children, (child) => (
           <div
-            className={`relative grid h-full w-full origin-center 
-              grid-cols-2 sm:grid-cols-${cols} gap-4 transform 
-              `}
+            className={cn('flex-shrink-0 flex items-center justify-center', {
+              'animate-marquee-horizontal group-hover:[animation-play-state:paused]':
+                pauseOnHover && !vertical,
+              'animate-marquee-horizontal': !pauseOnHover && !vertical,
+              'animate-marquee-vertical group-hover:[animation-play-state:paused]':
+                pauseOnHover && vertical,
+              'animate-marquee-vertical': !pauseOnHover && vertical,
+              '[animation-direction:reverse]': reverse,
+            })}
           >
-            {imageGroups.map((imagesInGroup, idx) => (
-              <motion.div
-                key={`column-${idx}`}
-                animate={{ y: idx % 2 === 0 ? 100 : -100 }}
-                transition={{
-                  duration: idx % 2 === 0 ? 10 : 15,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                }}
-                className="flex flex-col items-center gap-6 relative"
-              >
-                <div className="absolute left-0 top-0 h-full w-0.5 bg-gray-200 dark:bg-gray-700" />
-                {imagesInGroup.map((image, imgIdx) => {
-                  const globalIndex = idx * groupSize + imgIdx;
-                  const isClickable = image.href || onImageClick;
-
-                  return (
-                    <div key={`img-${imgIdx}`} className="relative">
-                      <div className="absolute top-0 left-0 w-full h-0.5 bg-gray-200 dark:bg-gray-700" />
-                      <motion.img
-                        whileHover={{ y: -10 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        src={image.src}
-                        alt={image.alt}
-                        width={970}
-                        height={700}
-                        className={`aspect-[970/700] w-full max-w-[200px] rounded-lg object-cover ring ring-gray-300/30 dark:ring-gray-800/50 shadow-xl hover:shadow-2xl transition-shadow duration-300 ${
-                          isClickable ? "cursor-pointer" : ""
-                        }`}
-                        onClick={() => handleImageClick(image, globalIndex)}
-                      />
-                    </div>
-                  );
-                })}
-              </motion.div>
-            ))}
+            {child}
           </div>
-        </div>
+        ))}
+         {React.Children.map(children, (child) => (
+          <div
+            className={cn('flex-shrink-0 flex items-center justify-center', {
+              'animate-marquee-horizontal group-hover:[animation-play-state:paused]':
+                pauseOnHover && !vertical,
+              'animate-marquee-horizontal': !pauseOnHover && !vertical,
+              'animate-marquee-vertical group-hover:[animation-play-state:paused]':
+                pauseOnHover && vertical,
+              'animate-marquee-vertical': !pauseOnHover && vertical,
+              '[animation-direction:reverse]': reverse,
+            })}
+          >
+            {child}
+          </div>
+        ))}
       </div>
-    </section>
-  );
-};
+    );
+  }
+);
+
+Marquee.displayName = 'Marquee';
+
+export const ThreeDMarquee = Marquee;
